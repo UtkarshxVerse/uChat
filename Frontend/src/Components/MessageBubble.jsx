@@ -2,20 +2,32 @@ import React from "react";
 
 export default function MessageBubble({ message }) {
   try {
-    const isSender = message.sender_id === JSON.parse(localStorage.getItem('user'))?.id;
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    const currentUserId = user?.id;
+
+    const isSender = message.sender_id === currentUserId;
+
     return (
       <div
         style={{
+          display: "flex",
+          justifyContent: isSender ? "flex-end" : "flex-start",
           marginBottom: "10px",
-          padding: "10px",
-          background: isSender ? "#007bff" : "#333",
-          color: "white",
-          borderRadius: "8px",
-          maxWidth: "60%",
-          alignSelf: isSender ? "flex-end" : "flex-start",
         }}
       >
-        {message.message}
+        <div
+          style={{
+            padding: "10px 14px",
+            backgroundColor: isSender ? "#007bff" : "#e5e5ea",
+            color: isSender ? "white" : "black",
+            borderRadius: "12px",
+            maxWidth: "60%",
+            wordBreak: "break-word",
+          }}
+        >
+          {message.message}
+        </div>
       </div>
     );
   } catch (error) {

@@ -101,27 +101,5 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// const getUser=async(req,res)=>{
-//   try {
-//     // prepare param for model
-//       const prepareParamForModel={
-//         user_id:req.params.user_id
-//       }
-//       const responseFromModel = await userModel.getUser(prepareParamForModel);
-//        return res.send({
-//           status:responseFromModel.status,
-//           message:responseFromModel.message,
-//           data:responseFromModel.data ??[]
-//         })
-
-//   } catch (error) {
-//     console.log("getUserError",error);
-//     return res.send({
-//       status:'error',
-//       message:'Something went wrong',
-//       error:error.message
-//     })
-//   }
-// }
 
 module.exports = { signup, login, getAllUsers };
