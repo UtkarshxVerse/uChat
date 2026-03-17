@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getMessages } from "../Api/axios.js";
-import { getSocket } from "../Services/socket.js";
+// import { getSocket } from "../Services/socket.js";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
 
@@ -23,16 +23,16 @@ export default function ChatWindow({ conversation }) {
     }, [conversation]);
 
     useEffect(() => {
-        const socket = getSocket();
-        if (!socket) return;
+        // // const socket = getSocket();
+        // if (!socket) return;
 
-        socket.on("receive_message", (msg) => {
-            setMessages((prev) => [...prev, msg]);
-        });
+        // socket.on("receive_message", (msg) => {
+        //     setMessages((prev) => [...prev, msg]);
+        // });
 
-        return () => {
-            socket.off("receive_message");
-        };
+        // return () => {
+        //     socket.off("receive_message");
+        // };
     }, []);
 
     if (!conversation) {

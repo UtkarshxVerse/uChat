@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { createMessage } from "../Api/axios.js";
-import { getSocket } from "../Services/socket.js";
+
 
 export default function MessageInput({ conversation, setMessages }) {
     const [text, setText] = useState("");
@@ -24,10 +24,10 @@ export default function MessageInput({ conversation, setMessages }) {
                 message: text,
             };
 
-            const socket = getSocket();
-            if (socket) {
-                socket.emit("send_message", savedMessage);
-            }
+            // const socket = getSocket();
+            // if (socket) {
+            //     socket.emit("send_message", savedMessage);
+            // }
 
             setMessages((prev) => [...prev, savedMessage]);
             setText("");

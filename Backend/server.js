@@ -1,19 +1,32 @@
-const db = require('./db');
-const express = require('express');
-const cors = require('cors');
-const authRouter  = require('./Routes/authRouter.js');
-const { apiLimiter } = require('./middlewares/rateLimiter.js');
-const messageRouter = require('./Routes/messageRouter.js');
-const conversationRouter = require('./Routes/conversationRouter.js');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const http = require("http");
+const { init, getIO } = require("./socket/socketInt");
+const { initSocket } = require("./socket/socketUtils");
+const authRouter = require("./Routes/authRouter");
+const messageRouter = require("./Routes/messageRouter");
+const conversationRouter = require("./Routes/conversationRouter");
+const { apiLimiter } = require("./middlewares/rateLimiter");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/auth",apiLimiter, authRouter);
-app.use("/api/messages", apiLimiter, messageRouter);
-app.use('/api/conversations',apiLimiter, conversationRouter );
+// create HTTP server
+const server = http.createServer(app);
 
-app.listen(8000, () => {
-        console.log("Server is running on port 8000");
-});
+// ✅ Step 1: Initialize Socket.io
+init(server);
+
+// ✅ Step 2: Initialize socket logic (middleware, event listeners)
+initSocket();
+
+// routes
+app.use("/api/auth", apiLimiter, authRouter);
+app.use("/api/messages", apiLimiter, messageRouter);
+app.use("/api/conversations", apiLimiter, conversationRouter);
+
+// start server
+const PORT = process.env.PORT || 8000;
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
