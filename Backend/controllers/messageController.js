@@ -5,12 +5,19 @@ const jwt = require("jsonwebtoken");
 const sendMessage = async (req, res) => {
     const { receiverId, message } = req.body;
     const senderId = req.user.id;
-    console.log("s fbskjf", req.body);
+    
+    console.log("\n🔵 [API] sendMessage endpoint called");
+    console.log(`   From: ${senderId}, To: ${receiverId}`);
+    console.log(`   Message: "${message}"`);
+    
     try {
+        console.log("⏳ [DB] Saving message via API...");
         const result = await Message.sendMessage(senderId, receiverId, message);
+        console.log("✅ [API] Message saved and response sent\n");
+        
         res.send({ status: "success", message: "Message sent successfully" });
     } catch (error) {
-        console.error("Error in sendMessage controller", error);
+        console.error("❌ [ERROR] Error in sendMessage controller:", error.message);
         res.status(500).send({ status: "error", message: "Internal server error", error: error.message });
     }
 }

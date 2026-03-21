@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getConversations } from "../Api/axios";
+import { onUnreadCountUpdate, onUserStatusUpdate, isUserOnline } from "../Services/socket";
 import { toast } from "react-toastify";
 import "./sidebar.css";
 
@@ -14,6 +15,8 @@ export default function Sidebar({ setSelectedConversation }) {
         // Get active chat from localStorage if available
         localStorage.getItem("activeChatId") || null
     );
+    const [unreadCounts, setUnreadCounts] = useState({});
+    const [onlineStatuses, setOnlineStatuses] = useState({});
 
     // Load selectedMembers from localStorage
     useEffect(() => {
@@ -39,6 +42,42 @@ export default function Sidebar({ setSelectedConversation }) {
 
     useEffect(() => {
         fetchConversations();
+    }, []);
+
+    // Listen for unread count updates from socket
+    useEffect(() => {
+        const unsubscribe = onUnreadCountUpdate((data) => {
+            const key = `${data.from}`;
+            setUnreadCounts((prev) => ({
+                ...prev,
+                [key]: data.unreadCount,
+            }));
+        });
+
+        return unsubscribe;
+    }, []);
+
+    // Listen for user status updates
+    useEffect(() => {
+        const unsubscribe = onUserStatusUpdate((data) => {
+            if (data.type === "users_list") {
+                // Initialize online statuses from users list
+                const statuses = {};
+                data.users.forEach(userId => {
+                    statuses[userId] = true;
+                });
+                setOnlineStatuses(statuses);
+            } else {
+                // Update individual user status
+                const key = `${data.userId}`;
+                setOnlineStatuses((prev) => ({
+                    ...prev,
+                    [key]: data.status === "online",
+                }));
+            }
+        });
+
+        return unsubscribe;
     }, []);
 
     // Add member
@@ -163,34 +202,56 @@ export default function Sidebar({ setSelectedConversation }) {
 
                 {filteredMembers.map((conv) => {
                     const chatName = conv.name || "Chat";
+                    const unreadCount = unreadCounts[conv.id] || 0;
+                    const userIsOnline = onlineStatuses[conv.id] || false;
 
                     return (
                         <div
                             key={conv.id}
                             onClick={() => handleConversationClick(conv)}
-                            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition
+                            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition relative
                                 ${activeChatId === conv.id
                                     ? "bg-blue-600 text-white"
                                     : "hover:bg-blue-600"
                                 }`}
                         >
-                            {/* Avatar */}
-                            <div
-                                className="w-11 h-11 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow"
-                                style={{ background: "#F7B400" }}
-                            >
-                                {chatName.charAt(0).toUpperCase()}
+                            {/* Avatar with Online Indicator */}
+                            <div className="relative">
+                                <div
+                                    className="w-11 h-11 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow"
+                                    style={{ background: "#F7B400" }}
+                                >
+                                    {chatName.charAt(0).toUpperCase()}
+                                </div>
+                                
+                                {/* Online Status Dot */}
+                                <div
+                                    className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900"
+                                    style={{ background: userIsOnline ? "#4ade80" : "#6b7280" }}
+                                ></div>
                             </div>
 
                             {/* Chat Info */}
                             <div className="flex flex-col flex-1">
                                 <span className="font-semibold">{chatName}</span>
-                                <span className="text-sm text-gray-400 truncate">
-                                    Start a conversation...
+                                <span className="text-xs" style={{ color: userIsOnline ? "#4ade80" : "#999" }}>
+                                    {userIsOnline ? "● Online" : "● Offline"}
                                 </span>
                             </div>
 
-                            <div className="text-xs text-yellow-400">Now</div>
+                            {/* Unread Badge */}
+                            {unreadCount > 0 && (
+                                <div className="flex items-center gap-2">
+                                    <div className="text-xs text-yellow-400">Now</div>
+                                    <div className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                                        {unreadCount > 99 ? "99+" : unreadCount}
+                                    </div>
+                                </div>
+                            )}
+
+                            {unreadCount === 0 && (
+                                <div className="text-xs text-yellow-400">Now</div>
+                            )}
                         </div>
                     );
                 })}

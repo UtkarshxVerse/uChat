@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getMessages } from "../Api/axios.js";
-import { getSocket } from "../Services/socket.js";
+import { getSocket, markAsRead, onUserStatusUpdate, isUserOnline } from "../Services/socket.js";
 import { getCurrentUserId } from "../Utils/jwtDecode";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
@@ -8,6 +8,7 @@ import MessageInput from "./MessageInput";
 export default function ChatWindow({ conversation }) {
 
     const [messages, setMessagesState] = useState([]);
+    const [isOnline, setIsOnline] = useState(false);
     const messageIdsRef = React.useRef(new Set());
 
     // Custom setMessages that also tracks IDs
@@ -33,6 +34,8 @@ export default function ChatWindow({ conversation }) {
             if (!conversation) return;
             const data = await getMessages(conversation.id);
             setMessages(data);
+            // Mark conversation as read when opened
+            markAsRead(conversation.id);
         } catch (error) {
             console.error("Message fetch error:", error);
         }
@@ -42,6 +45,22 @@ export default function ChatWindow({ conversation }) {
         // Clear tracker when conversation changes
         messageIdsRef.current.clear();
         fetchMessages();
+        
+        // Check initial online status
+        if (conversation) {
+            setIsOnline(isUserOnline(conversation.id));
+        }
+    }, [conversation]);
+
+    // Listen for user status changes
+    useEffect(() => {
+        const unsubscribe = onUserStatusUpdate((data) => {
+            if (conversation && data.userId === conversation.id) {
+                setIsOnline(data.status === "online");
+            }
+        });
+
+        return unsubscribe;
     }, [conversation]);
 
     useEffect(() => {
@@ -145,20 +164,20 @@ export default function ChatWindow({ conversation }) {
                     {/* Name + Status */}
                     <div>
                         <div style={{ fontWeight: "600" }}>{chatName}</div>
-                        <div style={{ fontSize: "12px", color: "#aaa" }}>
-                            Online
+                        <div style={{ fontSize: "12px", color: isOnline ? "#4ade80" : "#aaa", display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span
+                                style={{
+                                    width: "8px",
+                                    height: "8px",
+                                    borderRadius: "50%",
+                                    background: isOnline ? "#4ade80" : "#666",
+                                    display: "inline-block",
+                                }}
+                            ></span>
+                            {isOnline ? "Online" : "Offline"}
                         </div>
                     </div>
                 </div>
-                {/* Delete User Button
-                <div>
-                    <button
-                        // onClick={deleteUser}
-                        className="px-4 py-2 mr-4 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-md hover:scale-105 transition"
-                    >
-                        Remove User
-                    </button>
-                </div> */}
             </div>
 
             <MessageList messages={messages} />

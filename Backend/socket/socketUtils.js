@@ -1,14 +1,15 @@
 const socketModule = require("./socketInt");
 const jwt = require("jsonwebtoken");
-const Message = require("../models/messageModel");
+
+// Track online users
+const onlineUsers = new Map();
 
 function initSocket() {
-  const io = socketModule.getIO(); // ✅ now safe, because init(server) was called first
+  const io = socketModule.getIO();
 
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) return next(new Error("No token"));
-
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       socket.user = decoded;
@@ -19,33 +20,92 @@ function initSocket() {
   });
 
   io.on("connection", (socket) => {
-    console.log("✅ Connected:", socket.id, "User:", socket.user.user_id);
+    const userId = socket.user.user_id;
+    
+    // Mark user as online
+    onlineUsers.set(userId, {
+      socketId: socket.id,
+      userId: userId,
+      timestamp: new Date()
+    });
 
-    socket.join(`user_${socket.user.user_id}`);
+    socket.join(`user_${userId}`);
+
+    // Broadcast user came online
+    io.emit("user_status", {
+      userId: userId,
+      status: "online"
+    });
+    console.log(`✅ User ${userId} came online`);
+
+    // Track unread messages per user
+    const unreadCounts = new Map();
 
     socket.on("send_message", async ({ toUserId, message, timestamp }) => {
       try {
-        // Save message to database
-        await Message.sendMessage(socket.user.user_id, toUserId, message);
+        console.log("\nsend_message event received");
+        console.log(`   From: ${userId}, To: ${toUserId}`);
+        console.log(`   Message: "${message}"`);
+        console.log(`   Timestamp: ${timestamp}`);
+        
+        console.log("Preparing real-time delivery to recipient...");
         
         const room = `user_${toUserId}`;
+        console.log(`Broadcasting to room: ${room}`);
         io.to(room).emit("receive_message", {
-          from: socket.user.user_id,
+          from: userId,
           message,
           timestamp: timestamp || new Date().toISOString()
         });
+
+        // Increment unread count for recipient and broadcast it
+        const unreadKey = `${toUserId}_from_${userId}`;
+        const currentUnread = unreadCounts.get(unreadKey) || 0;
+        unreadCounts.set(unreadKey, currentUnread + 1);
+
+        io.to(room).emit("unread_count_update", {
+          from: userId,
+          unreadCount: currentUnread + 1
+        });
+        console.log(`Unread count updated: ${unreadKey} = ${currentUnread + 1}\n`);
         
-        console.log(`📨 Message sent from ${socket.user.user_id} to ${toUserId}`);
       } catch (error) {
-        console.error("Error sending message:", error);
-        socket.emit("message_error", { error: "Failed to send message" });
+        console.error("Failed to broadcast message:", error.message);
+        socket.emit("message_error", { error: "Failed to broadcast message" });
       }
     });
 
+    // Reset unread count when user opens conversation
+    socket.on("mark_as_read", ({ fromUserId }) => {
+      const unreadKey = `${userId}_from_${fromUserId}`;
+      unreadCounts.set(unreadKey, 0);
+      console.log(`Marked as read: ${unreadKey}`);
+      
+      socket.emit("unread_count_update", {
+        from: fromUserId,
+        unreadCount: 0
+      });
+    });
+
+    // Get online users
+    socket.on("get_online_users", () => {
+      const onlineUsersList = Array.from(onlineUsers.values()).map(u => u.userId);
+      socket.emit("online_users", { users: onlineUsersList });
+      console.log(`Sent online users list to ${userId}:`, onlineUsersList);
+    });
+
     socket.on("disconnect", () => {
-      console.log("❌ Disconnected:", socket.user.user_id);
+      // Mark user as offline
+      onlineUsers.delete(userId);
+      
+      // Broadcast user went offline
+      io.emit("user_status", {
+        userId: userId,
+        status: "offline"
+      });
+      console.log(`❌ User ${userId} went offline`);
     });
   });
 }
 
-module.exports = { initSocket };
+module.exports = { initSocket, onlineUsers };
