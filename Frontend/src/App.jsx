@@ -8,6 +8,8 @@ import { initSocket } from "./Services/socket";
 
 function App() {
   const [status, setStatus] = useState("Disconnected");
+  const [token, setToken] = useState(localStorage.getItem("token"));
+
   try {
     // ✅ Only run after the component mounts
     useEffect(() => {
@@ -23,12 +25,19 @@ function App() {
 
       return () => socket.disconnect();
     }, []);
+
+    // Monitor localStorage changes for token updates
+    useEffect(() => {
+      const handleStorageChange = () => {
+        setToken(localStorage.getItem("token"));
+      };
+
+      window.addEventListener("storage", handleStorageChange);
+      return () => window.removeEventListener("storage", handleStorageChange);
+    }, []);
   } catch (error) {
     console.log("ssss", error);
   }
-
-
-  const token = localStorage.getItem("token");
 
   return (
     <BrowserRouter>
