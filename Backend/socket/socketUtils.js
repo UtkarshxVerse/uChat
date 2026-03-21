@@ -1,5 +1,6 @@
 const socketModule = require("./socketInt");
 const jwt = require("jsonwebtoken");
+const Message = require("../models/messageModel");
 
 function initSocket() {
   const io = socketModule.getIO(); // ✅ now safe, because init(server) was called first
@@ -22,12 +23,23 @@ function initSocket() {
 
     socket.join(`user_${socket.user.user_id}`);
 
-    socket.on("send_message", ({ toUserId, message }) => {
-      const room = `user_${toUserId}`;
-      io.to(room).emit("receive_message", {
-        from: socket.user.user_id,
-        message
-      });
+    socket.on("send_message", async ({ toUserId, message, timestamp }) => {
+      try {
+        // Save message to database
+        await Message.sendMessage(socket.user.user_id, toUserId, message);
+        
+        const room = `user_${toUserId}`;
+        io.to(room).emit("receive_message", {
+          from: socket.user.user_id,
+          message,
+          timestamp: timestamp || new Date().toISOString()
+        });
+        
+        console.log(`📨 Message sent from ${socket.user.user_id} to ${toUserId}`);
+      } catch (error) {
+        console.error("Error sending message:", error);
+        socket.emit("message_error", { error: "Failed to send message" });
+      }
     });
 
     socket.on("disconnect", () => {

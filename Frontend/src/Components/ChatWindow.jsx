@@ -1,12 +1,32 @@
 import React, { useEffect, useState } from "react";
 import { getMessages } from "../Api/axios.js";
-// import { getSocket } from "../Services/socket.js";
+import { getSocket } from "../Services/socket.js";
+import { getCurrentUserId } from "../Utils/jwtDecode";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
 
 export default function ChatWindow({ conversation }) {
 
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessagesState] = useState([]);
+    const messageIdsRef = React.useRef(new Set());
+
+    // Custom setMessages that also tracks IDs
+    const setMessages = (updater) => {
+        setMessagesState((prev) => {
+            const newMessages = typeof updater === 'function' ? updater(prev) : updater;
+            
+            // If it's a new set of messages, rebuild the tracker
+            if (!Array.isArray(newMessages)) return newMessages;
+            
+            // Track all message IDs
+            newMessages.forEach(msg => {
+                const msgKey = `${msg.sender_id}_${msg.message}_${msg.timestamp || msg.created_at}`;
+                messageIdsRef.current.add(msgKey);
+            });
+            
+            return newMessages;
+        });
+    };
 
     const fetchMessages = async () => {
         try {
@@ -19,21 +39,50 @@ export default function ChatWindow({ conversation }) {
     };
 
     useEffect(() => {
+        // Clear tracker when conversation changes
+        messageIdsRef.current.clear();
         fetchMessages();
     }, [conversation]);
 
     useEffect(() => {
-        // // const socket = getSocket();
-        // if (!socket) return;
+        const socket = getSocket();
+        if (!socket || !conversation) return;
 
-        // socket.on("receive_message", (msg) => {
-        //     setMessages((prev) => [...prev, msg]);
-        // });
+        const handleReceiveMessage = (msg) => {
+            console.log("📨 Received message from socket:", msg);
+            const currentUserId = getCurrentUserId();
+            
+            // Only add message if it's from the current conversation partner
+            if (msg.from === conversation.id) {
+                const msgKey = `${msg.from}_${msg.message}_${msg.timestamp}`;
+                
+                // Check if message already exists to prevent duplicates
+                if (messageIdsRef.current.has(msgKey)) {
+                    console.log("⏭️ Duplicate message ignored:", msgKey);
+                    return;
+                }
 
-        // return () => {
-        //     socket.off("receive_message");
-        // };
-    }, []);
+                const newMessage = {
+                    id: msgKey,
+                    sender_id: msg.from,
+                    receiver_id: currentUserId,
+                    message: msg.message,
+                    timestamp: msg.timestamp || new Date().toISOString(),
+                    created_at: msg.timestamp || new Date().toISOString()
+                };
+
+                messageIdsRef.current.add(msgKey);
+                setMessages((prev) => [...prev, newMessage]);
+                console.log("✅ Message added:", msgKey);
+            }
+        };
+
+        socket.on("receive_message", handleReceiveMessage);
+
+        return () => {
+            socket.off("receive_message", handleReceiveMessage);
+        };
+    }, [conversation]);
 
     if (!conversation) {
         return (

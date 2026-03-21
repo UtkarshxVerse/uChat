@@ -10,13 +10,16 @@ export const initSocket = () => {
     return null;
   }
 
-  if (!socket) {
+  if (!socket || !socket.connected) {
     socket = io("http://192.168.10.36:8000", {
       auth: {
         token,
         device_type: "web",
       },
-      autoConnect: true, // default
+      autoConnect: true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
     });
 
     socket.on("connect", () => {
@@ -30,8 +33,19 @@ export const initSocket = () => {
     socket.on("disconnect", () => {
       console.log("❌ Socket disconnected");
     });
+
+    socket.on("reconnect", () => {
+      console.log("🔄 Socket reconnected:", socket.id);
+    });
   }
 
+  return socket;
+};
+
+export const getSocket = () => {
+  if (!socket) {
+    return initSocket();
+  }
   return socket;
 };
 
