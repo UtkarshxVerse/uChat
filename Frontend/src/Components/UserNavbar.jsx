@@ -63,11 +63,10 @@ function UserNavbar() {
       console.log('Socket already disconnected or not available');
     }
 
-    // Clear all localStorage data
+    // Clear only authentication data - keep conversation history
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('selectedMembers');
-    localStorage.removeItem('activeChatId');
+    // DO NOT remove selectedMembers and activeChatId - keep conversation history for next login
     
     setIsOpen(false);
     toast.success('Logged out successfully');
@@ -97,10 +96,10 @@ function UserNavbar() {
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-3 hover:bg-gray-800 px-3 py-2 rounded-lg transition"
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
             {userInitial}
           </div>
-          <span className="text-gray-200 text-sm font-medium hidden sm:inline">{user.name}</span>
+          <span className="text-gray-200 text-md font-bold hidden sm:inline">{user.name}</span>
         </button>
 
         {isOpen && (
@@ -112,7 +111,7 @@ function UserNavbar() {
             <div className="py-2">
               <button
                 onClick={() => {
-                  toast.info('Profile view coming soon');
+                  navigate('/profile');
                   setIsOpen(false);
                 }}
                 className="w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-700 transition text-sm"

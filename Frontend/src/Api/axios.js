@@ -24,6 +24,18 @@ export const getConversations = async () => {
   }
 };
 
+// Fetch user's conversation history (users they've chatted with)
+export const getUserConversationHistory = async () => {
+  try {
+    const res = await API.get("/messages/conversations");
+    return res.data.conversations || [];
+  } catch (error) {
+    console.error("Error fetching conversation history:", error);
+    // If endpoint doesn't exist, return empty array
+    return [];
+  }
+};
+
 // Fetch messages with a specific user
 export const getMessages = async (userId) => {
   try {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Home from './Pages/HomePage/Home';
+import Profile from './Pages/ProfilePage/Profile';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Signup from './Pages/SignupPage/SignUp';
 import Login from './Pages/LoginPage/Login';
@@ -56,6 +57,7 @@ function App() {
       <Routes>
         <Route path='/login' element={token ? <Home /> : <Login />} />
         <Route path='/signup' element={token ? <Home /> : <Signup />} />
+        <Route path='/profile' element={token ? <Profile /> : <Login />} />
         <Route path='/' element={token ? <Home /> : <Login />} />
       </Routes>
     </BrowserRouter>

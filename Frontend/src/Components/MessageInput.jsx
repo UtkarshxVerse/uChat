@@ -16,11 +16,6 @@ export default function MessageInput({ conversation, setMessages }) {
 
     const sendMessage = async () => {
         try {
-            if (!text.trim()) {
-                toast.error("Invalid input: Message cannot be empty");
-                return;
-            }
-
             const firstChar = text[0];
             const isValidFirstChar = /^[a-zA-Z0-9\s]/.test(firstChar);
             
