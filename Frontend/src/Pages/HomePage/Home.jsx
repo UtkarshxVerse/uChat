@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import Prism from './Prism';
 import ChatWindow from '../../Components/ChatWindow';
 import Sidebar from '../../Components/Sidebar';
+import UserNavbar from '../../Components/UserNavbar';
 
 function Home() {
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -22,14 +23,17 @@ function Home() {
       </div>
 
       {/* Foreground UI layer */}
-      <div className='relative z-10 flex w-full h-full text-white bg-opacity-90 rounded-lg shadow-lg overflow-hidden'>
-        <Sidebar
-          setSelectedConversation={setSelectedConversation}
-        />
+      <div className='relative z-10 flex flex-col w-full h-full text-white bg-opacity-90 rounded-lg shadow-lg overflow-hidden'>
+        <UserNavbar />
+        <div className='flex flex-1 min-h-0'>
+          <Sidebar
+            setSelectedConversation={setSelectedConversation}
+          />
 
-        <ChatWindow
-          conversation={selectedConversation}
-        />
+          <ChatWindow
+            conversation={selectedConversation}
+          />
+        </div>
       </div>
 
     </div>

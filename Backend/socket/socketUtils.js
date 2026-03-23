@@ -4,6 +4,9 @@ const jwt = require("jsonwebtoken");
 // Track online users
 const onlineUsers = new Map();
 
+// Global unread counts storage (keyed by recipient_id_from_sender_id)
+const globalUnreadCounts = new Map();
+
 function initSocket() {
   const io = socketModule.getIO();
 
@@ -36,17 +39,14 @@ function initSocket() {
       userId: userId,
       status: "online"
     });
-    console.log(`✅ User ${userId} came online`);
-
-    // Track unread messages per user
-    const unreadCounts = new Map();
+    // console.log(`✅ User ${userId} came online`);
 
     socket.on("send_message", async ({ toUserId, message, timestamp }) => {
       try {
-        console.log("\nsend_message event received");
-        console.log(`   From: ${userId}, To: ${toUserId}`);
-        console.log(`   Message: "${message}"`);
-        console.log(`   Timestamp: ${timestamp}`);
+        // console.log("\nsend_message event received");
+        // console.log(`   From: ${userId}, To: ${toUserId}`);
+        // console.log(`   Message: "${message}"`);
+        // console.log(`   Timestamp: ${timestamp}`);
         
         console.log("Preparing real-time delivery to recipient...");
         
@@ -60,14 +60,14 @@ function initSocket() {
 
         // Increment unread count for recipient and broadcast it
         const unreadKey = `${toUserId}_from_${userId}`;
-        const currentUnread = unreadCounts.get(unreadKey) || 0;
-        unreadCounts.set(unreadKey, currentUnread + 1);
+        const currentUnread = globalUnreadCounts.get(unreadKey) || 0;
+        globalUnreadCounts.set(unreadKey, currentUnread + 1);
 
         io.to(room).emit("unread_count_update", {
           from: userId,
           unreadCount: currentUnread + 1
         });
-        console.log(`Unread count updated: ${unreadKey} = ${currentUnread + 1}\n`);
+        // console.log(`Unread count updated: ${unreadKey} = ${currentUnread + 1}\n`);
         
       } catch (error) {
         console.error("Failed to broadcast message:", error.message);
@@ -78,10 +78,11 @@ function initSocket() {
     // Reset unread count when user opens conversation
     socket.on("mark_as_read", ({ fromUserId }) => {
       const unreadKey = `${userId}_from_${fromUserId}`;
-      unreadCounts.set(unreadKey, 0);
-      console.log(`Marked as read: ${unreadKey}`);
+      globalUnreadCounts.set(unreadKey, 0);
+      // console.log(`Marked as read: ${unreadKey}`);
       
-      socket.emit("unread_count_update", {
+      // Broadcast to all sockets in user's room to update all connected clients
+      io.to(`user_${userId}`).emit("unread_count_update", {
         from: fromUserId,
         unreadCount: 0
       });
@@ -91,7 +92,7 @@ function initSocket() {
     socket.on("get_online_users", () => {
       const onlineUsersList = Array.from(onlineUsers.values()).map(u => u.userId);
       socket.emit("online_users", { users: onlineUsersList });
-      console.log(`Sent online users list to ${userId}:`, onlineUsersList);
+      // console.log(`Sent online users list to ${userId}:`, onlineUsersList);
     });
 
     socket.on("disconnect", () => {
@@ -103,7 +104,7 @@ function initSocket() {
         userId: userId,
         status: "offline"
       });
-      console.log(`❌ User ${userId} went offline`);
+      // console.log(`❌ User ${userId} went offline`);
     });
   });
 }

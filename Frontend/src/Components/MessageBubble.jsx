@@ -12,24 +12,12 @@ export default function MessageBubble({ message }) {
     // console.log("Is sent by current user:", isSentByCurrentUser);
 
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: isSentByCurrentUser ? "flex-end" : "flex-start",
-          marginBottom: "10px",
-        }}
-      >
-        <div
-          style={{
-            padding: "10px 14px",
-            backgroundColor: isSentByCurrentUser ? "#007bff" : "#2d2d2d",
-            color: isSentByCurrentUser ? "white" : "#e5e5ea",
-            borderRadius: "12px",
-            maxWidth: "60%",
-            wordBreak: "break-word",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.2)"
-          }}
-        >
+      <div className={`flex mb-2.5 ${isSentByCurrentUser ? "justify-end" : "justify-start"}`}>
+        <div className={`px-3.5 py-2.5 rounded-lg max-w-xs break-words shadow-sm ${
+          isSentByCurrentUser 
+            ? "bg-blue-500 text-white" 
+            : "bg-gray-700 text-gray-200"
+        }`}>
           {message.message}
         </div>
       </div>

@@ -5,15 +5,7 @@ export default function MessageList({ messages }) {
 
     try {
         return (
-            <div
-                style={{
-                    flex: 1,
-                    overflowY: "auto",
-                    padding: "20px",
-                    display: "flex",
-                    flexDirection: "column"
-                }}
-            >
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col">
                 {messages?.map((msg) => (
                     <MessageBubble key={msg.id} message={msg} />
                 ))}

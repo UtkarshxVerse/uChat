@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { getConversations } from "../Api/axios";
 import { onUnreadCountUpdate, onUserStatusUpdate, isUserOnline } from "../Services/socket";
 import { toast } from "react-toastify";
-import "./sidebar.css";
 
 export default function Sidebar({ setSelectedConversation }) {
     const [conversations, setConversations] = useState([]);
@@ -112,11 +111,11 @@ export default function Sidebar({ setSelectedConversation }) {
     };
 
     return (
-        <div className="sidebar bg-gray-900 text-white h-full flex flex-col">
+        <div className="w-90 h-screen bg-blue-1000 border-r border-gray-800 flex flex-col text-white">
             {/* Header */}
-            <div className="sidebar-header px-4 py-4">
+            <div className="px-4 py-3 border-b border-gray-700">
                 <div className="flex justify-between items-center mb-3">
-                    <h2 className="text-3xl font-bold">Chats</h2>
+                    <h2 className="text-2xl font-bold">Messages</h2>
                     <button
                         onClick={() => setShowUsers(true)}
                         className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-md hover:scale-105 transition"
@@ -127,7 +126,7 @@ export default function Sidebar({ setSelectedConversation }) {
 
                 {/* Search */}
                 <input
-                    className="w-full p-2 rounded-lg border border-gray-700 bg-gray-800 text-white mb-2"
+                    className="w-full px-2 py-2 rounded-lg border border-gray-700 bg-gray-800 text-white mb-2 outline-none focus:border-blue-500 transition"
                     placeholder="Search members..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -145,7 +144,7 @@ export default function Sidebar({ setSelectedConversation }) {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex justify-between items-center mb-5">
-                            <h2 className="text-xl font-bold text-gray-800">Add Members</h2>
+                            <h2 className="text-xl text-center font-bold text-gray-800">Add Members</h2>
                             <button
                                 onClick={() => setShowUsers(false)}
                                 className="text-gray-500 hover:text-red-500 text-lg"
@@ -217,24 +216,20 @@ export default function Sidebar({ setSelectedConversation }) {
                         >
                             {/* Avatar with Online Indicator */}
                             <div className="relative">
-                                <div
-                                    className="w-11 h-11 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow"
-                                    style={{ background: "#F7B400" }}
-                                >
+                                <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow bg-amber-400">
                                     {chatName.charAt(0).toUpperCase()}
                                 </div>
                                 
                                 {/* Online Status Dot */}
-                                <div
-                                    className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900"
-                                    style={{ background: userIsOnline ? "#4ade80" : "#6b7280" }}
-                                ></div>
+                                <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${
+                                  userIsOnline ? "bg-green-400" : "bg-gray-500"
+                                }`}></div>
                             </div>
 
                             {/* Chat Info */}
                             <div className="flex flex-col flex-1">
                                 <span className="font-semibold">{chatName}</span>
-                                <span className="text-xs" style={{ color: userIsOnline ? "#4ade80" : "#999" }}>
+                                <span className={`text-xs ${userIsOnline ? "text-green-400" : "text-gray-500"}`}>
                                     {userIsOnline ? "● Online" : "● Offline"}
                                 </span>
                             </div>

@@ -5,29 +5,13 @@ export default function ConversationItem({ conversation, onClick, unreadCount = 
         return (
             <div
                 onClick={onClick}
-                style={{
-                    padding: "12px",
-                    borderBottom: "1px solid #333",
-                    cursor: "pointer",
-                    color: "white",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    background: unreadCount > 0 ? "rgba(220, 38, 38, 0.1)" : "transparent",
-                }}
+                className={`flex items-center justify-between p-3 border-b border-gray-700 cursor-pointer text-white transition ${
+                  unreadCount > 0 ? "bg-red-950/20" : "bg-transparent"
+                }`}
             >
                 <strong>{conversation.name}</strong>
                 {unreadCount > 0 && (
-                    <span
-                        style={{
-                            background: "#dc2626",
-                            color: "white",
-                            padding: "2px 8px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            fontWeight: "bold",
-                        }}
-                    >
+                    <span className="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded-full">
                         {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                 )}

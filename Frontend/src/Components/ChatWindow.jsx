@@ -105,16 +105,7 @@ export default function ChatWindow({ conversation }) {
 
     if (!conversation) {
         return (
-            <div
-                style={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#888",
-                    background: "rgba(0,0,0,0.5)",
-                }}
-            >
+            <div className="flex-1 flex items-center justify-center text-gray-500 bg-black/50">
                 Select a chat to start messaging
             </div>
         );
@@ -123,57 +114,24 @@ export default function ChatWindow({ conversation }) {
     const chatName = conversation.name || "Private Chat";
 
     return (
-        <div
-            style={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                background: "rgba(10, 10, 10, 0.85)",
-            }}
-        >
+        <div className="flex-1 flex flex-col min-h-0 bg-black">
             {/* CHAT HEADER */}
-            <div className="flex items-center justify-between">
-                <div
-                    style={{
-                        padding: "15px 20px",
-                        borderBottom: "1px solid #333",
-                        background: "#111",
-                        color: "white",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                    }}
-                >
+            <div className="flex-shrink-0 flex items-center justify-between">
+                <div className="flex items-center gap-3 px-5 py-3.75 border-b border-gray-700 bg-black text-white w-full">
                     {/* Avatar */}
-                    <div
-                        style={{
-                            width: "40px",
-                            height: "40px",
-                            borderRadius: "50%",
-                            background: "#4a90e2",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontWeight: "bold",
-                            fontSize: "16px",
-                        }}
-                    >
+                    <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold text-base">
                         {chatName.charAt(0).toUpperCase()}
                     </div>
 
                     {/* Name + Status */}
                     <div>
-                        <div style={{ fontWeight: "600" }}>{chatName}</div>
-                        <div style={{ fontSize: "12px", color: isOnline ? "#4ade80" : "#aaa", display: "flex", alignItems: "center", gap: "6px" }}>
-                            <span
-                                style={{
-                                    width: "8px",
-                                    height: "8px",
-                                    borderRadius: "50%",
-                                    background: isOnline ? "#4ade80" : "#666",
-                                    display: "inline-block",
-                                }}
-                            ></span>
+                        <div className="font-semibold">{chatName}</div>
+                        <div className={`text-xs flex items-center gap-1.5 ${
+                          isOnline ? "text-green-400" : "text-gray-400"
+                        }`}>
+                            <span className={`w-2 h-2 rounded-full inline-block ${
+                              isOnline ? "bg-green-400" : "bg-gray-500"
+                            }`}></span>
                             {isOnline ? "Online" : "Offline"}
                         </div>
                     </div>
@@ -182,10 +140,12 @@ export default function ChatWindow({ conversation }) {
 
             <MessageList messages={messages} />
 
-            <MessageInput
-                conversation={conversation}
-                setMessages={setMessages}
-            />
+            <div className="flex-shrink-0">
+                <MessageInput
+                    conversation={conversation}
+                    setMessages={setMessages}
+                />
+            </div>
         </div>
     );
 }
