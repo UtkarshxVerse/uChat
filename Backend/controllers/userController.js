@@ -53,7 +53,7 @@ const login = async (req, res) => {
     res.send({
       message: "Login successful",
       token,
-      user: { id: user.id, name: user.name, email: user.email },
+      user: { id: user.id, name: user.name, email: user.email, profile_pic: user.profile_pic },
     });
   } catch (error) {
     console.error("Error during login:", error);
@@ -101,5 +101,101 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const uploadProfilePic = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
 
-module.exports = { signup, login, getAllUsers };
+    // Check if token exists
+    if (!authHeader) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    // Extract token from "Bearer <token>"
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    // Verify token
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decodedToken.user_id;
+
+    // Check if file exists
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // Get the file info
+    const profilePicUrl = `/uploads/profile-pics/${req.file.filename}`;
+
+    // Update user profile picture in database
+    const result = await userModel.updateProfilePic(userId, profilePicUrl);
+
+    if (result.status === "error") {
+      return res.status(500).json(result);
+    }
+
+    // Get updated user data
+    const updatedUser = await userModel.getUserById(userId);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Profile picture uploaded successfully",
+      profilePicUrl: profilePicUrl,
+      user: { id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, profile_pic: updatedUser.profile_pic }
+    });
+
+  } catch (error) {
+    console.error("Error uploading profile pic:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to upload profile picture",
+      error: error.message,
+    });
+  }
+};
+
+const updateProfileName = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : authHeader;
+
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decodedToken.user_id;
+
+    const { newName } = req.body;
+    if (!newName || newName.trim() === "") {
+      return res.status(400).json({ message: "Name cannot be empty" });
+    }
+
+    const result = await userModel.updateName(userId, newName.trim());
+
+    if (result.status === "error") {
+      return res.status(500).json(result);
+    }
+
+    const updatedUser = await userModel.getUserById(userId);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Name updated successfully",
+      user: { id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, profile_pic: updatedUser.profile_pic }
+    });
+
+  } catch (error) {
+    console.error("Error updating name:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to update name",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { signup, login, getAllUsers, uploadProfilePic, updateProfileName };

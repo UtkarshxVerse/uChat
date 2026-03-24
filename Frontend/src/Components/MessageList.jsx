@@ -1,13 +1,13 @@
 import React from "react";
 import MessageBubble from "./MessageBubble";
 
-export default function MessageList({ messages }) {
+export default function MessageList({ messages, conversation }) {
 
     try {
         return (
-            <div className="flex-1 overflow-y-auto p-5 flex flex-col">
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col custom-scrollbar">
                 {messages?.map((msg) => (
-                    <MessageBubble key={msg.id} message={msg} />
+                    <MessageBubble key={msg.id} message={msg} conversation={conversation} />
                 ))}
             </div>
         );

@@ -8,7 +8,7 @@ function Home() {
   const [selectedConversation, setSelectedConversation] = useState(null);
   return (
     <div className='w-full h-screen relative bg-black overflow-hidden'>
-      <div className='absolute inset-0 z-0'> 
+      <div className='absolute inset-0 z-0'>
         <Prism
           animationType="rotate"
           timeScale={0.5}

@@ -66,12 +66,12 @@ export default function MessageInput({ conversation, setMessages }) {
     };
 
     return (
-        <div className="flex gap-2.5 p-5 border-t border-gray-700 bg-gray-950">
+        <div className="flex gap-2.5 p-3 border-t border-gray-700 m-2 rounded-xl bg-black/10">
             <input
                 value={text}
                 onChange={handleTextChange}
                 disabled={isLoading}
-                className="flex-1 px-2.5 py-2.5 rounded bg-gray-800 text-white border-none outline-none placeholder-gray-500 disabled:opacity-50"
+                className="flex-1 px-2.5 py-2.5 rounded bg-black/40 text-white border-none outline-none placeholder-gray-500 disabled:opacity-50"
                 placeholder="Type your message..."
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' && !isLoading) sendMessage();
