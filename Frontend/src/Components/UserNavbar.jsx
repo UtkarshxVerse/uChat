@@ -148,7 +148,7 @@ function UserNavbar() {
               >
                 View Profile
               </button>
-              <button
+              {/* <button
                 onClick={() => {
                   toast.info('Settings coming soon');
                   setIsOpen(false);
@@ -156,7 +156,7 @@ function UserNavbar() {
                 className="w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-700 transition text-sm"
               >
                 Settings
-              </button>
+              </button> */}
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 transition text-sm"

@@ -10,6 +10,7 @@ export default function Sidebar({ setSelectedConversation }) {
     const [error, setError] = useState(null);
     const [showUsers, setShowUsers] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [addMemberSearch, setAddMemberSearch] = useState("");
     const [memberToDelete, setMemberToDelete] = useState(null);
     const [activeChatId, setActiveChatId] = useState(
         // Get active chat from localStorage if available
@@ -175,7 +176,7 @@ export default function Sidebar({ setSelectedConversation }) {
                         className="bg-white w-[400px] rounded-xl shadow-2xl p-6"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex justify-between items-center mb-5">
+                        <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl text-center font-bold text-gray-800">Add Members</h2>
                             <button
                                 onClick={() => setShowUsers(false)}
@@ -184,10 +185,24 @@ export default function Sidebar({ setSelectedConversation }) {
                                 ✕
                             </button>
                         </div>
+                        
+                        {/* Search inside Add Members */}
+                        <div className="mb-4">
+                            <input
+                                className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-800 outline-none focus:border-blue-500 focus:bg-white transition"
+                                placeholder="Search new members..."
+                                value={addMemberSearch}
+                                onChange={(e) => setAddMemberSearch(e.target.value)}
+                            />
+                        </div>
 
-                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
                             {conversations
-                                .filter((user) => !selectedMembers.find((u) => u.id === user.id))
+                                .filter((user) => {
+                                    const notAlreadyAdded = !selectedMembers.find((u) => u.id === user.id);
+                                    const matchesSearch = user.name.toLowerCase().includes(addMemberSearch.toLowerCase());
+                                    return notAlreadyAdded && matchesSearch;
+                                })
                                 .map((user) => {
                                     const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
                                     return (
@@ -223,9 +238,13 @@ export default function Sidebar({ setSelectedConversation }) {
                                     );
                                 })}
 
-                            {conversations.filter((user) => !selectedMembers.find((u) => u.id === user.id)).length === 0 && (
+                            {conversations.filter((user) => {
+                                const notAlreadyAdded = !selectedMembers.find((u) => u.id === user.id);
+                                const matchesSearch = user.name.toLowerCase().includes(addMemberSearch.toLowerCase());
+                                return notAlreadyAdded && matchesSearch;
+                            }).length === 0 && (
                                 <div className="text-center text-gray-500 py-4">
-                                    No members to add
+                                    No matching members found
                                 </div>
                             )}
                         </div>
