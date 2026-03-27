@@ -92,8 +92,65 @@ const getConversation = async (req, res) => {
   }
 };
 
+// GET USER GROUPS
+const getUserGroups = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const groups = await Conversation.getUserGroups(userId);
+
+    if (groups && groups.status === "error") {
+      return res.status(500).json({ message: "Server error", error: groups.message });
+    }
+
+    res.status(200).json({
+      message: "Groups fetched successfully",
+      data: groups,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const deleteGroup = async (req, res) => {
+    try {
+        const groupId = req.params.id;
+        await Conversation.deleteGroup(groupId);
+        res.status(200).json({ status: "success", message: "Group deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+const getGroupMembers = async (req, res) => {
+    try {
+        const groupId = req.params.id;
+        const group = await Conversation.getConversationById(groupId);
+        if (!group || group.type !== 'group') return res.status(404).json({ message: "Group not found" });
+
+        const memberIds = group.members || [];
+        if (memberIds.length === 0) return res.status(200).json({ data: [] });
+
+        const db = require("../db");
+        const placeholders = memberIds.map(() => '?').join(',');
+        const sql = `SELECT id, name, email, profile_pic FROM users WHERE id IN (${placeholders})`;
+        const [users] = await db.query(sql, memberIds);
+
+        res.status(200).json({ status: "success", data: users });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
 
 module.exports = {
   createConversation,
   getConversation,
+  getUserGroups,
+  deleteGroup,
+  getGroupMembers,
 };

@@ -12,6 +12,12 @@ const signup = async (req, res) => {
     password: req.body.password,
   };
 
+  const allowedDomains = ["@gmail.com", "@yahoo.com"];
+  const isValidDomain = allowedDomains.some(domain => email.endsWith(domain));
+  if (!isValidDomain) {
+    return res.status(400).send({ message: "Only @gmail.com or @yahoo.com emails are allowed" });
+  }
+
   try {
     const ExistingUser = await userModel.findUser(email);
     if (ExistingUser) {
@@ -35,6 +41,12 @@ const signup = async (req, res) => {
 
 const login = async (req, res) => {
   const { email, password } = req.body;
+
+  const allowedDomains = ["@gmail.com", "@yahoo.com"];
+  const isValidDomain = allowedDomains.some(domain => email.endsWith(domain));
+  if (!isValidDomain) {
+    return res.status(400).send({ message: "Only @gmail.com or @yahoo.com emails are allowed" });
+  }
 
   try {
     const user = await userModel.findUser(email);

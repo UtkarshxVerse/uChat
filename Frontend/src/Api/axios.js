@@ -37,9 +37,9 @@ export const getUserConversationHistory = async () => {
 };
 
 // Fetch messages with a specific user
-export const getMessages = async (userId) => {
+export const getMessages = async (userId, isGroup = false) => {
   try {
-    const res = await API.get(`/messages/${userId}`);
+    const res = await API.get(`/messages/${userId}?isGroup=${isGroup}`);
     return res.data.messages || [];
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -47,9 +47,9 @@ export const getMessages = async (userId) => {
   }
 };
 
-// Send a message to a specific user
+// Send a message to a specific user or group
 export const createMessage = async (data) => {
-  // data expected to be { receiverId: <user.id>, message: "text" }
+  // data expected to be { receiverId: <user.id>, message: "text", isGroup: boolean }
   try {
     const res = await API.post("/messages", data);
     return res.data;
@@ -58,3 +58,49 @@ export const createMessage = async (data) => {
     throw error;
   }
 };
+
+// Create a new group chat
+export const createGroup = async (data) => {
+  // data expected to be { type: "group", name: "My Group", members: [1, 2, 3] }
+  try {
+    const res = await API.post("/conversations/create", data);
+    return res.data;
+  } catch (error) {
+    console.error("Error creating group:", error);
+    throw error;
+  }
+};
+
+// Fetch user's group chats
+export const getGroups = async () => {
+  try {
+    const res = await API.get("/conversations/groups");
+    return res.data.data || [];
+  } catch (error) {
+    console.error("Error fetching groups:", error);
+    return [];
+  }
+};
+
+// Delete a group chat
+export const deleteGroup = async (groupId) => {
+  try {
+    const res = await API.delete(`/conversations/groups/${groupId}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error deleting group:", error);
+    throw error;
+  }
+};
+
+// Fetch group members
+export const getGroupMembers = async (groupId) => {
+  try {
+    const res = await API.get(`/conversations/groups/${groupId}/members`);
+    return res.data.data || [];
+  } catch (error) {
+    console.error("Error fetching group members:", error);
+    return [];
+  }
+};
+

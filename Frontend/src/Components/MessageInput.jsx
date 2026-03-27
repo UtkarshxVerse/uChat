@@ -18,7 +18,7 @@ export default function MessageInput({ conversation, setMessages }) {
         try {
             const firstChar = text[0];
             const isValidFirstChar = /^[a-zA-Z0-9\s]/.test(firstChar);
-            
+
             if (!isValidFirstChar) {
                 toast.error("Invalid input: Message cannot start with special characters");
                 return;
@@ -31,6 +31,7 @@ export default function MessageInput({ conversation, setMessages }) {
             const messageData = {
                 receiverId: conversation.id,
                 message: text,
+                isGroup: !!conversation.isGroup
             };
 
             // Send message via API (save to database)
@@ -54,7 +55,8 @@ export default function MessageInput({ conversation, setMessages }) {
                 socket.emit("send_message", {
                     toUserId: conversation.id,
                     message: text,
-                    timestamp: timestamp
+                    timestamp: timestamp,
+                    isGroup: !!conversation.isGroup
                 });
             }
 
@@ -77,8 +79,8 @@ export default function MessageInput({ conversation, setMessages }) {
                     if (e.key === 'Enter' && !isLoading) sendMessage();
                 }}
             />
-            <button 
-                onClick={sendMessage} 
+            <button
+                onClick={sendMessage}
                 disabled={isLoading}
                 className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-md hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >

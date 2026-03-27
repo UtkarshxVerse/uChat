@@ -23,6 +23,14 @@ function Home() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate email
+    const emailStr = form.email.toLowerCase();
+    if (!emailStr.endsWith("@gmail.com") && !emailStr.endsWith("@yahoo.com")) {
+      toast.error("Only @gmail.com or @yahoo.com emails are allowed");
+      return;
+    }
+
     setIsLoading(true);
 
     try {

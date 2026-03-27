@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { getConversations } from "../Api/axios";
+import { getConversations, getGroups, createGroup, deleteGroup } from "../Api/axios";
+import { getCurrentUserId } from "../Utils/jwtDecode";
 import { onUnreadCountUpdate, onUserStatusUpdate, isUserOnline } from "../Services/socket";
 import { toast } from "react-toastify";
+import { useState, useEffect } from "react";
 
 export default function Sidebar({ setSelectedConversation }) {
     const [conversations, setConversations] = useState([]);
@@ -12,6 +13,11 @@ export default function Sidebar({ setSelectedConversation }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [addMemberSearch, setAddMemberSearch] = useState("");
     const [memberToDelete, setMemberToDelete] = useState(null);
+    const [groups, setGroups] = useState([]);
+    const [showCreateGroup, setShowCreateGroup] = useState(false);
+    const [groupName, setGroupName] = useState("");
+    const [selectedGroupMembers, setSelectedGroupMembers] = useState([]);
+    const [createGroupSearch, setCreateGroupSearch] = useState("");
     const [activeChatId, setActiveChatId] = useState(
         // Get active chat from localStorage if available
         localStorage.getItem("activeChatId") || null
@@ -33,7 +39,9 @@ export default function Sidebar({ setSelectedConversation }) {
             setLoading(true);
             setError(null);
             const data = await getConversations();
+            const groupsData = await getGroups();
             setConversations(data);
+            setGroups(groupsData);
 
             // Sync selectedMembers with freshly fetched data
             setSelectedMembers((prevMembers) => {
@@ -120,19 +128,67 @@ export default function Sidebar({ setSelectedConversation }) {
         setShowUsers(false); // Close the modal after removing a member
     };
 
+    const handleCreateGroup = async () => {
+        if (!groupName.trim() || selectedGroupMembers.length === 0) {
+            toast.error("Please provide a group name and select members");
+            return;
+        }
+
+        try {
+            const currentUserId = getCurrentUserId();
+            const members = [...selectedGroupMembers.map(u => u.id), currentUserId];
+
+            await createGroup({
+                type: "group",
+                name: groupName,
+                members: members
+            });
+            toast.success("Group created successfully!");
+            setShowCreateGroup(false);
+            setGroupName("");
+            setSelectedGroupMembers([]);
+            setCreateGroupSearch("");
+            fetchConversations();
+        } catch (err) {
+            toast.error("Failed to create group");
+        }
+    };
+
+    const toggleGroupMember = (user) => {
+        if (selectedGroupMembers.find(u => u.id === user.id)) {
+            setSelectedGroupMembers(prev => prev.filter(u => u.id !== user.id));
+        } else {
+            setSelectedGroupMembers(prev => [...prev, user]);
+        }
+    };
+
     // Filter selected members for sidebar display
-    const filteredMembers = selectedMembers.filter((member) =>
-        member.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const allChats = [...selectedMembers, ...groups];
+    const uniqueChats = allChats.filter((v, i, a) => a.findIndex(t => (t.id === v.id && !!t.isGroup === !!v.isGroup)) === i);
+
+    const filteredMembers = uniqueChats.filter((member) =>
+        (member.name || "Chat").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (!memberToDelete) return;
 
-        // Remove from list
-        const newMembers = selectedMembers.filter((u) => u.id !== memberToDelete.id);
-        setSelectedMembers(newMembers);
-        localStorage.setItem("selectedMembers", JSON.stringify(newMembers));
-        toast.info(`${memberToDelete.name} removed from conversations!`);
+        if (memberToDelete.isGroup) {
+            try {
+                await deleteGroup(memberToDelete.id);
+                setGroups((prev) => prev.filter(g => g.id !== memberToDelete.id));
+                toast.success("Group deleted!");
+            } catch (err) {
+                toast.error("Failed to delete group");
+            }
+        } else {
+            // Remove from list
+            const newMembers = selectedMembers.filter((u) => u.id !== memberToDelete.id);
+            setSelectedMembers(newMembers);
+            localStorage.setItem("selectedMembers", JSON.stringify(newMembers));
+            toast.info(`${memberToDelete.name} removed from conversations!`);
+        }
+
         setShowUsers(false);
 
         // Clear active chat if the deleted one was currently open
@@ -141,7 +197,7 @@ export default function Sidebar({ setSelectedConversation }) {
             setActiveChatId(null);
             localStorage.removeItem("activeChatId");
         }
-        
+
         setMemberToDelete(null);
     };
 
@@ -157,12 +213,21 @@ export default function Sidebar({ setSelectedConversation }) {
             <div className="px-4 pt-3 border-b border-gray-700">
                 <div className="flex justify-between items-center mb-3">
                     <h2 className="text-2xl font-bold">Messages</h2>
-                    <button
-                        onClick={() => setShowUsers(true)}
-                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-md hover:scale-105 transition"
-                    >
-                        Add Members
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowCreateGroup(true)}
+                            className="px-2 py-2 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:scale-105 transition"
+                            title="Create Group"
+                        >
+                            + Group
+                        </button>
+                        <button
+                            onClick={() => setShowUsers(true)}
+                            className="py-1 px-3 rounded-full text-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-md hover:scale-105 transition"
+                        >
+                            +
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -185,7 +250,7 @@ export default function Sidebar({ setSelectedConversation }) {
                                 ✕
                             </button>
                         </div>
-                        
+
                         {/* Search inside Add Members */}
                         <div className="mb-4">
                             <input
@@ -243,17 +308,97 @@ export default function Sidebar({ setSelectedConversation }) {
                                 const matchesSearch = user.name.toLowerCase().includes(addMemberSearch.toLowerCase());
                                 return notAlreadyAdded && matchesSearch;
                             }).length === 0 && (
-                                <div className="text-center text-gray-500 py-4">
-                                    No matching members found
-                                </div>
-                            )}
+                                    <div className="text-center text-gray-500 py-4">
+                                        No matching members found
+                                    </div>
+                                )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Create Group Modal */}
+            {showCreateGroup && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+                    onClick={() => setShowCreateGroup(false)}
+                >
+                    <div
+                        className="bg-white w-[400px] rounded-xl shadow-2xl p-6"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl text-center font-bold text-gray-800">Create Group</h2>
+                            <button
+                                onClick={() => setShowCreateGroup(false)}
+                                className="text-gray-500 hover:text-red-500 text-lg"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="mb-4">
+                            <input
+                                className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-800 outline-none focus:border-blue-500 focus:bg-white transition"
+                                placeholder="Search members to add..."
+                                value={createGroupSearch}
+                                onChange={(e) => setCreateGroupSearch(e.target.value)}
+                            />
+                        </div>
+
+                        {selectedGroupMembers.length > 0 && (
+                            <div className="mb-4 animate-fadeIn">
+                                <input
+                                    className="w-full px-3 py-2 rounded-lg border border-green-400 bg-green-50 text-gray-900 outline-none focus:border-green-600 focus:bg-white transition"
+                                    placeholder="Enter Group Name..."
+                                    value={groupName}
+                                    onChange={(e) => setGroupName(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        <div className="text-sm font-semibold text-gray-600 mb-2">Select Members</div>
+                        <div className="space-y-2 max-h-[250px] overflow-y-auto custom-scrollbar mb-4">
+                            {conversations
+                                .filter((user) => user.name.toLowerCase().includes(createGroupSearch.toLowerCase()))
+                                .map((user) => (
+                                    <div
+                                        key={user.id}
+                                        className="flex items-center gap-3 bg-gray-100 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-200"
+                                        onClick={() => toggleGroupMember(user)}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={!!selectedGroupMembers.find(u => u.id === user.id)}
+                                            readOnly
+                                            className="w-4 h-4 cursor-pointer"
+                                        />
+                                        <span className="font-medium text-gray-700 truncate">{user.name}</span>
+                                    </div>
+                                ))}
+                        </div>
+
+                        <button
+                            onClick={handleCreateGroup}
+                            className="w-full py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-lg hover:scale-105 transition shadow-md"
+                        >
+                            Create Group
+                        </button>
                     </div>
                 </div>
             )}
 
             {/* Sidebar Conversations */}
             <div className="conversation-list flex-1 px-2 overflow-y-auto">
+
+                {/* Search */}
+                <input
+                    className="w-full mt-3 px-2 py-2 rounded-lg border border-gray-700 bg-gray-800 text-white mb-2 outline-none focus:border-blue-500 transition"
+                    placeholder="Search members..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+
                 {loading && (
                     <div className="text-center text-gray-500 py-6 animate-pulse">
                         Loading chats...
@@ -267,14 +412,6 @@ export default function Sidebar({ setSelectedConversation }) {
                         No members found
                     </div>
                 )}
-
-                {/* Search */}
-                <input
-                    className="w-full mt-3 px-2 py-2 rounded-lg border border-gray-700 bg-gray-800 text-white mb-2 outline-none focus:border-blue-500 transition"
-                    placeholder="Search members..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
 
                 {filteredMembers.map((conv) => {
                     const chatName = conv.name || "Chat";
@@ -317,9 +454,13 @@ export default function Sidebar({ setSelectedConversation }) {
                             {/* Chat Info */}
                             <div className="flex flex-col flex-1 min-w-0">
                                 <span className="font-semibold truncate">{chatName}</span>
-                                <span className={`text-xs ${userIsOnline ? "text-green-400" : "text-gray-500"}`}>
-                                    {userIsOnline ? "● Online" : "● Offline"}
-                                </span>
+                                {conv.isGroup ? (
+                                    <span className="text-xs text-indigo-400">Group Chat</span>
+                                ) : (
+                                    <span className={`text-xs ${userIsOnline ? "text-green-400" : "text-gray-500"}`}>
+                                        {userIsOnline ? "● Online" : "● Offline"}
+                                    </span>
+                                )}
                             </div>
 
                             {/* Unread Badge */}

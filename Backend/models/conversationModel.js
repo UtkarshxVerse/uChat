@@ -28,8 +28,8 @@ const Conversation = {
         throw new Error("Invalid conversation type");
       }
 
-    //   console.log("SQL Query:", sql);
-    //   console.log("With Values:", values);
+      //   console.log("SQL Query:", sql);
+      //   console.log("With Values:", values);
 
       const [result] = await db.query(sql, values);
 
@@ -50,17 +50,56 @@ const Conversation = {
       const conversation = rows[0];
 
       if (conversation.type === "group" && conversation.members) {
-        try {
-          conversation.members = JSON.parse(conversation.members);
-        } catch (err) {
-          console.warn("Invalid JSON in members:", conversation.members);
-          conversation.members = [];
+        if (typeof conversation.members === "string") {
+          try {
+            conversation.members = JSON.parse(conversation.members);
+          } catch (err) {
+            console.warn("Invalid JSON in members:", conversation.members);
+            conversation.members = [];
+          }
         }
       }
 
       return conversation;
     } catch (error) {
       console.error("Error fetching conversation:", error);
+      return { status: "error", message: error.message };
+    }
+  },
+
+  getUserGroups: async (userId) => {
+    try {
+      const sql = `SELECT * FROM conversations WHERE type = 'group' AND JSON_CONTAINS(members, CAST(? AS JSON), '$')`;
+      const [rows] = await db.query(sql, [userId]);
+      return rows.map(conv => {
+        if (conv.members) {
+          if (typeof conv.members === "string") {
+            try {
+              conv.members = JSON.parse(conv.members);
+            } catch (err) {
+              conv.members = [];
+            }
+          }
+        }
+        return {
+          ...conv,
+          isGroup: true,
+          profile_pic: null
+        };
+      });
+    } catch (error) {
+      console.error("Error fetching user groups:", error);
+      return { status: "error", message: error.message };
+    }
+  },
+
+  deleteGroup: async (groupId) => {
+    try {
+      const sql = `DELETE FROM conversations WHERE id = ? AND type = 'group'`;
+      const [result] = await db.query(sql, [groupId]);
+      return result;
+    } catch (error) {
+      console.error("Error deleting group:", error);
       return { status: "error", message: error.message };
     }
   },

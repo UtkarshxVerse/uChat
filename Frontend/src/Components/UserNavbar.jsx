@@ -107,7 +107,7 @@ function UserNavbar() {
   const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
 
   return (
-    <div className="bg-blue-1000 border-b rounded-xl m-3 border-gray-700 px-4 py-2 flex items-center justify-between">
+    <div className="bg-blue-1000 border-b rounded-xl m-3 mt-1 border-gray-700 px-4 py-2 flex items-center justify-between">
       <div className="text-gray-300 text-4xl font-bold"><img src="../public/image.png" alt="" className='h-13 w-20' /></div>
       <div className="relative" ref={dropdownRef}>
         <button
@@ -148,15 +148,6 @@ function UserNavbar() {
               >
                 View Profile
               </button>
-              {/* <button
-                onClick={() => {
-                  toast.info('Settings coming soon');
-                  setIsOpen(false);
-                }}
-                className="w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-700 transition text-sm"
-              >
-                Settings
-              </button> */}
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 transition text-sm"
