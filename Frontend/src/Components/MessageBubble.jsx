@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getCurrentUserId } from "../Utils/jwtDecode";
 
-export default function MessageBubble({ message, conversation }) {
+export default function MessageBubble({ message, conversation, groupMembers = [] }) {
   try {
     const [currentUser, setCurrentUser] = useState(null);
     const currentUserId = getCurrentUserId();
@@ -18,18 +18,27 @@ export default function MessageBubble({ message, conversation }) {
     }, []);
 
     const isSentByCurrentUser = message.sender_id === currentUserId;
-    
+
     // Get profile picture and name based on sender
-    const senderProfilePic = isSentByCurrentUser 
-      ? currentUser?.profile_pic 
-      : conversation?.profile_pic;
-    
-    const senderName = isSentByCurrentUser 
-      ? currentUser?.name 
-      : conversation?.name;
-    
-    const senderInitial = senderName 
-      ? senderName.charAt(0).toUpperCase() 
+    let senderProfilePic = null;
+    let senderName = null;
+
+    if (isSentByCurrentUser) {
+      senderProfilePic = currentUser?.profile_pic;
+      senderName = currentUser?.name;
+    } else {
+      if (conversation?.isGroup) {
+        const member = groupMembers.find(m => m.id === message.sender_id);
+        senderProfilePic = member?.profile_pic;
+        senderName = member?.name;
+      } else {
+        senderProfilePic = conversation?.profile_pic;
+        senderName = conversation?.name;
+      }
+    }
+
+    const senderInitial = senderName
+      ? senderName.charAt(0).toUpperCase()
       : 'U';
 
     return (
@@ -39,7 +48,7 @@ export default function MessageBubble({ message, conversation }) {
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 overflow-hidden">
             {senderProfilePic ? (
               <img
-                src={`http://localhost:8000${senderProfilePic}`}
+                src={`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:8000'}${senderProfilePic}`}
                 alt={senderName}
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -54,12 +63,16 @@ export default function MessageBubble({ message, conversation }) {
         )}
 
         {/* Message Bubble */}
-        <div className={`px-3.5 py-2.5 rounded-lg max-w-xs break-words shadow-sm ${
-          isSentByCurrentUser 
-            ? "bg-blue-500 text-white rounded-br-none" 
-            : "bg-gray-700 text-gray-200 rounded-bl-none"
-        }`}>
-          {message.message}
+        <div className="flex flex-col max-w-xs">
+          {!isSentByCurrentUser && conversation?.isGroup && senderName && (
+            <span className="text-xs text-indigo-300 ml-1 mb-0.5">{senderName}</span>
+          )}
+          <div className={`px-3.5 py-2.5 rounded-lg break-words shadow-sm ${isSentByCurrentUser
+              ? "bg-blue-500 text-white rounded-br-none"
+              : "bg-gray-700 text-gray-200 rounded-bl-none"
+            }`}>
+            {message.message}
+          </div>
         </div>
 
         {/* Sender Avatar - Show on right for sent messages */}
@@ -67,7 +80,7 @@ export default function MessageBubble({ message, conversation }) {
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 overflow-hidden">
             {senderProfilePic ? (
               <img
-                src={`http://localhost:8000${senderProfilePic}`}
+                src={`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:8000'}${senderProfilePic}`}
                 alt={senderName}
                 className="w-full h-full object-cover"
                 onError={(e) => {

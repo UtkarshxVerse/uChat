@@ -147,10 +147,51 @@ const getGroupMembers = async (req, res) => {
     }
 };
 
+// UPDATE GROUP PICTURE
+const updateGroupPic = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.id;
+        
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        // Verify user is a group member
+        const group = await Conversation.getConversationById(id);
+        if (!group || group.type !== 'group') {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        const members = Array.isArray(group.members) ? group.members : JSON.parse(group.members || '[]');
+        if (!members.includes(userId)) {
+            return res.status(403).json({ message: "You are not a member of this group" });
+        }
+
+        // Update group picture in database
+        const picPath = `/uploads/group_pics/${req.file.filename}`;
+        await Conversation.updateGroupPic(id, picPath);
+
+        res.status(200).json({ 
+            status: "success", 
+            message: "Group picture updated successfully",
+            profilePic: picPath
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 module.exports = {
   createConversation,
   getConversation,
   getUserGroups,
   deleteGroup,
   getGroupMembers,
+  updateGroupPic,
 };

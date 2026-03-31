@@ -27,7 +27,7 @@ const getMessage = async (req, res) => {
     const decode = jwt.verify(token, process.env.JWT_SECRET);
     const user1 = decode.user_id;
     const user2 = req.params.id; // User ID or Group ID
-    
+
     // We can pass isGroup as a query param e.g. /api/messages/123?isGroup=true
     const isGroup = req.query.isGroup === 'true';
 

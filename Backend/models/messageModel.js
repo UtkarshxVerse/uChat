@@ -5,7 +5,7 @@ const Message = {
     try {
       let sendMessageQuery;
       let values;
-      
+
       if (isGroup) {
         sendMessageQuery = `INSERT INTO messages (sender_id, group_id, message) VALUES (?, ?, ?)`;
         values = [senderId, receiverId, message];
@@ -13,7 +13,7 @@ const Message = {
         sendMessageQuery = `INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)`;
         values = [senderId, receiverId, message];
       }
-      
+
       const [resSendMessageQuery] = await db.query(sendMessageQuery, values);
       return resSendMessageQuery;
     } catch (error) {
@@ -30,13 +30,13 @@ const Message = {
     try {
       let sql;
       let values;
-      
+
       if (isGroup) {
-         sql = `SELECT * FROM messages WHERE group_id = ? ORDER BY created_at ASC`;
-         values = [user2]; // user2 acts as group_id here
+        sql = `SELECT * FROM messages WHERE group_id = ? ORDER BY created_at ASC`;
+        values = [user2]; // user2 acts as group_id here
       } else {
-         sql = `SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at ASC`;
-         values = [user1, user2, user2, user1];
+        sql = `SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at ASC`;
+        values = [user1, user2, user2, user1];
       }
 
       // console.log("SQL:", sql);

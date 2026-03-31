@@ -279,7 +279,7 @@ export default function Sidebar({ setSelectedConversation }) {
                                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs overflow-hidden flex-shrink-0">
                                                     {user.profile_pic ? (
                                                         <img
-                                                            src={`http://localhost:8000${user.profile_pic}`}
+                                                            src={`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:8000'}${user.profile_pic}`}
                                                             alt={user.name}
                                                             className="w-full h-full object-cover"
                                                             onError={(e) => {
@@ -433,7 +433,7 @@ export default function Sidebar({ setSelectedConversation }) {
                                 <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden">
                                     {conv.profile_pic ? (
                                         <img
-                                            src={`http://localhost:8000${conv.profile_pic}`}
+                                            src={`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:8000'}${conv.profile_pic}`}
                                             alt={chatName}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {

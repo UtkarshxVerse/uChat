@@ -69,7 +69,7 @@ const Conversation = {
 
   getUserGroups: async (userId) => {
     try {
-      const sql = `SELECT * FROM conversations WHERE type = 'group' AND JSON_CONTAINS(members, CAST(? AS JSON), '$')`;
+      const sql = `SELECT id, type, name, created_by, members, group_pic as profile_pic FROM conversations WHERE type = 'group' AND JSON_CONTAINS(members, CAST(? AS JSON), '$')`;
       const [rows] = await db.query(sql, [userId]);
       return rows.map(conv => {
         if (conv.members) {
@@ -83,8 +83,7 @@ const Conversation = {
         }
         return {
           ...conv,
-          isGroup: true,
-          profile_pic: null
+          isGroup: true
         };
       });
     } catch (error) {
@@ -100,6 +99,18 @@ const Conversation = {
       return result;
     } catch (error) {
       console.error("Error deleting group:", error);
+      return { status: "error", message: error.message };
+    }
+  },
+
+  updateGroupPic: async (groupId, picPath) => {
+    try {
+      const sql = `UPDATE conversations SET group_pic = ? WHERE id = ? AND type = 'group'`;
+      const [result] = await db.query(sql, [picPath, groupId]);
+      console.log("✅ Group picture updated for group ID:", groupId);
+      return result;
+    } catch (error) {
+      console.error("Error updating group picture:", error);
       return { status: "error", message: error.message };
     }
   },

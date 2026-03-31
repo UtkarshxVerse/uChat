@@ -15,7 +15,7 @@ export default function ConversationItem({ conversation, onClick, unreadCount = 
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm overflow-hidden flex-shrink-0">
                         {conversation.profile_pic ? (
                             <img
-                                src={`http://localhost:8000${conversation.profile_pic}`}
+                                src={`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:8000'}${conversation.profile_pic}`}
                                 alt={conversation.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {

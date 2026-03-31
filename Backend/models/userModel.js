@@ -67,8 +67,7 @@ const userModel = {
 
   updateName: async (userId, newName) => {
     try {
-      const [result] = await db
-        .query("UPDATE users SET name = ? WHERE id = ?", [newName, userId]);
+      const [result] = await db.query("UPDATE users SET name = ? WHERE id = ?", [newName, userId]);
       return { success: true, message: "Name updated successfully" };
     } catch (error) {
       console.log("Error in updateName userModel", error);
@@ -95,34 +94,5 @@ const userModel = {
     }
   },
 };
-
-// module.exports.User = async (data) => {
-//     try {
-//         const INSRTQUERY = `INSERT INTO users (name, email, password) VALUES (${data.name}, ${data.email}, ${data.password})`;
-//          const responseWithQuery = await db.query(INSRTQUERY);
-//          if(responseWithQuery.status == "true"){
-//           return {status: "success", message: "User created successfully"};
-//          } else {
-//             return {status: "error", message: "Failed to create user"};
-//          }
-//     } catch (error) {
-//         console.log("Error in User model", error);
-//         return {status: "error", message: "Soomthing went wrong", error: error.message};
-//     }
-// }
-
-// const getUser=async(data)=>{
-//   try {
-//      const queryForGetUser = `SELECT * FROM users WHERE id = ${data.id}`;
-//      const responseWithQuery = await db.query(queryForGetUser);
-//      return {status: "success", message: "User fetched successfully", data: responseWithQuery ??[]};
-//   } catch (error) {
-//     console.log("getUserError",error);
-//     return {status:'error',
-//             message:'Something went wrong',
-//             error:error.message
-//           };
-//   }
-// }
 
 module.exports = userModel;

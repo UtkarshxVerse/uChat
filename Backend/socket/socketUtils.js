@@ -52,7 +52,7 @@ function initSocket() {
           if (rows.length > 0) {
             let members = rows[0].members;
             if (typeof members === 'string') members = JSON.parse(members);
-            
+
             members.forEach(memberId => {
               if (memberId !== userId) {
                 const room = `user_${memberId}`;

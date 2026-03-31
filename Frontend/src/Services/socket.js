@@ -14,7 +14,8 @@ export const initSocket = () => {
   }
 
   if (!socket || !socket.connected) {
-    socket = io("http://192.168.10.36:8000", {
+    const socketURL = import.meta.env.VITE_SOCKET_URL || "http://localhost:8000";
+    socket = io(socketURL, {
       auth: {
         token,
         device_type: "web",
